@@ -30,5 +30,5 @@
 ## 🚀 使用方法
 1. **拉取脚本**
    ```bash
-   wget -q https://raw.githubusercontent.com/你的用户名/ubuntu-optimization/main/main.sh -O main.sh
+   wget -q https://raw.githubusercontent.com/tbtb20110110/ubuntu-optimization/main/main.sh -O main.sh
    chmod +x main.sh
