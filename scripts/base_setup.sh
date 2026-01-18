@@ -1,8 +1,11 @@
 #!/bin/bash
-USER_HOME=$(eval echo ~$SUDO_USER)
-source <(wget -qO- $REPO_URL/scripts/log_tool.sh)
+# 核心修改：获取本地脚本目录，引用本地log_tool.sh，替换远程source依赖
+SCRIPT_DIR=$(dirname "$(realpath "$0")")
+source "$SCRIPT_DIR/log_tool.sh"
 
-# 国内源切换函数
+USER_HOME=$(eval echo ~$SUDO_USER)
+
+# 国内源配置（无修改）
 replace_sources() {
     echo -e "${YELLOW}===== 国内源选择 =====${NC}"
     echo " [1] 阿里云源 [2] 清华大学源 [3] 中科大源 [4] 保留官方源"
@@ -39,7 +42,7 @@ EOF
     success_log "国内源配置完成"
 }
 
-# 终端中文配置函数
+# 终端中文配置（无修改）
 terminal_chinese() {
     info_log "配置终端全局中文..."
     apt install -y language-pack-zh-hans fonts-wqy-microhei > /dev/null
@@ -48,7 +51,7 @@ terminal_chinese() {
     success_log "终端中文配置完成，重启终端生效"
 }
 
-# 指纹登录配置函数（强化华为MateBook15d适配）
+# 指纹登录配置（无修改）
 fingerprint_setup() {
     echo -e "${YELLOW}===== 指纹机型适配选择 =====${NC}"
     echo " [1] 华为 MateBook 系列（推荐15d） [2] 联想系列 [3] 通用机型 [4] 跳过"
@@ -58,7 +61,6 @@ fingerprint_setup() {
     apt install -y libpam-fprintd fprintd hwdata > /dev/null
     case $fp_idx in
         1)
-            # 华为MateBook15d专属指纹驱动
             modprobe goodix
             echo "goodix" >> /etc/modules-load.d/modules.conf
             ;;
@@ -69,7 +71,7 @@ fingerprint_setup() {
     success_log "指纹登录配置完成，重启系统生效"
 }
 
-# 运行库补全函数（适配华为15d集显）
+# 运行库补全（无修改）
 libs_complete() {
     echo -e "${YELLOW}===== 显卡类型选择 =====${NC}"
     echo " [1] 集显（华为15d推荐） [2] NVIDIA独显 [3] 双显卡"
@@ -78,7 +80,6 @@ libs_complete() {
     apt install -y build-essential lib32gcc-s1 wine wine32 mesa-utils > /dev/null
     case $gpu_idx in
         1)
-            # 华为15d集显专属优化
             apt install -y libgl1-mesa-glx libgl1-mesa-dri xserver-xorg-video-intel > /dev/null
             ;;
         2) apt install -y nvidia-driver-550 nvidia-utils-550 > /dev/null ;;
@@ -87,20 +88,18 @@ libs_complete() {
     success_log "运行库补全完成"
 }
 
-# 华为MateBook15d专属优化（屏幕亮度+触控板+声卡）
+# 华为专属优化（核心修改：添加grep检查，避免重复写入GRUB参数）
 huawei_specific() {
     info_log "华为 MateBook 15d 专属优化..."
-    # 修复屏幕亮度调节
-    sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/s/"$/ acpi_backlight=vendor"/' /etc/default/grub
-    # 优化触控板手势
-    apt install -y xserver-xorg-input-libinput libinput-tools > /dev/null
-    # 修复声卡驱动
-    apt install -y alsa-utils pulseaudio > /dev/null
+    if ! grep -q "acpi_backlight=vendor" /etc/default/grub; then
+        sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/s/"$/ acpi_backlight=vendor"/' /etc/default/grub
+    fi
+    apt install -y xserver-xorg-input-libinput libinput-tools alsa-utils pulseaudio > /dev/null
     update-grub > /dev/null
     success_log "华为 MateBook 15d 专属优化完成"
 }
 
-# 执行所有基础配置
+# 执行配置（无修改）
 replace_sources
 terminal_chinese
 fingerprint_setup
