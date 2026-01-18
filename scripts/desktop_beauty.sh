@@ -1,12 +1,11 @@
 #!/bin/bash
-# 核心修改：本地引用日志工具
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# 核心修复：兼容sudo运行的路径获取逻辑
+SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "$0")")" || exit 1; pwd)
 source "$SCRIPT_DIR/log_tool.sh"
 
 USER_HOME=$(eval echo ~$SUDO_USER)
 DESKTOP_ENV=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
 
-# 安装依赖（核心修改：移除chrome-gnome-shell，适配GNOME 46）
 install_deps() {
     info_log "检测桌面环境：$DESKTOP_ENV"
     case $DESKTOP_ENV in
@@ -23,13 +22,11 @@ install_deps() {
     esac
 }
 
-# 获取主题列表（核心修改：添加check_download检查）
 get_theme_list() {
     DESKTOP_THEMES=($(wget -qO- $REPO_URL/config/desktop_themes.list))
     check_download "桌面主题列表"
 }
 
-# 选择主题（无修改）
 select_theme() {
     echo -e "${YELLOW}===== 桌面主题选择 =====${NC}"
     for i in "${!DESKTOP_THEMES[@]}"; do
@@ -39,7 +36,6 @@ select_theme() {
     SELECTED_THEME=${DESKTOP_THEMES[$((theme_idx-1))]}
 }
 
-# 应用主题（核心修改：添加check_download检查）
 apply_theme() {
     info_log "应用 ${SELECTED_THEME} 桌面配置..."
     wget -q "$REPO_URL/config/desktop_tpl/${DESKTOP_ENV}_${SELECTED_THEME}.conf" -O $USER_HOME/.config/${DESKTOP_ENV}_theme.conf
@@ -53,7 +49,6 @@ apply_theme() {
     esac
 }
 
-# 执行流程（无修改）
 install_deps
 get_theme_list
 select_theme
