@@ -11,20 +11,20 @@ NC='\033[0m'
 LOG_FILE="logs/dualboot_$(date +%Y%m%d).log"
 mkdir -p logs
 
-# 核心修复：date 格式符添加双引号
+# 核心修复：改用单引号包裹date格式符，避免参数拆分
 info_log() {
-    echo -e "${BLUE}[*] $(date +"%H:%M:%S") $1${NC}"
-    echo "[$(date +%Y-%m-%d %H:%M:%S)] [INFO] $1" >> $LOG_FILE
+    echo -e "${BLUE}[*] $(date +'%H:%M:%S') $1${NC}"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [INFO] $1" >> $LOG_FILE
 }
 
 success_log() {
-    echo -e "${GREEN}[√] $(date +"%H:%M:%S") $1${NC}"
-    echo "[$(date +%Y-%m-%d %H:%M:%S)] [SUCCESS] $1" >> $LOG_FILE
+    echo -e "${GREEN}[√] $(date +'%H:%M:%S') $1${NC}"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [SUCCESS] $1" >> $LOG_FILE
 }
 
 error_log() {
-    echo -e "${RED}[×] $(date +"%H:%M:%S") $1${NC}"
-    echo "[$(date +%Y-%m-%d %H:%M:%S)] [ERROR] $1" >> $LOG_FILE
+    echo -e "${RED}[×] $(date +'%H:%M:%S') $1${NC}"
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] [ERROR] $1" >> $LOG_FILE
 }
 
 # 通用下载失败检查函数
