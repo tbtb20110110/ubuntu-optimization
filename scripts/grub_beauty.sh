@@ -1,7 +1,7 @@
 #!/bin/bash
-# 核心修复：兼容sudo运行的路径获取逻辑
-SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "$0")")" || exit 1; pwd)
-source "$SCRIPT_DIR/log_tool.sh"
+# 终极修复：切换到脚本自身目录，确保找到log_tool.sh
+cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
+source ./log_tool.sh
 
 GRUB_DIR="/boot/grub/themes"
 
