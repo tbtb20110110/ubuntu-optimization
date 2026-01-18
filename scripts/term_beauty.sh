@@ -1,12 +1,11 @@
 #!/bin/bash
-# 核心修改：本地引用日志工具
-SCRIPT_DIR=$(dirname "$(realpath "$0")")
+# 核心修复：兼容sudo运行的路径获取逻辑
+SCRIPT_DIR=$(cd "$(dirname "$(readlink -f "$0")")" || exit 1; pwd)
 source "$SCRIPT_DIR/log_tool.sh"
 
 USER_HOME=$(eval echo ~$SUDO_USER)
 mkdir -p $USER_HOME/.oh-my-zsh/custom/plugins
 
-# 获取列表（核心修改：添加check_download检查）
 get_lists() {
     TERM_COLORS=($(wget -qO- $REPO_URL/config/term_colors.list))
     check_download "终端配色列表"
@@ -14,7 +13,6 @@ get_lists() {
     check_download "终端字体列表"
 }
 
-# 选择配色（无修改）
 select_color() {
     echo -e "${YELLOW}===== 终端配色方案选择 =====${NC}"
     for i in "${!TERM_COLORS[@]}"; do
@@ -24,7 +22,6 @@ select_color() {
     SELECTED_COLOR=${TERM_COLORS[$((color_idx-1))]}
 }
 
-# 选择字体（无修改）
 select_font() {
     echo -e "${YELLOW}===== 终端字体选择 =====${NC}"
     for i in "${!TERM_FONTS[@]}"; do
@@ -34,7 +31,6 @@ select_font() {
     SELECTED_FONT=${TERM_FONTS[$((font_idx-1))]}
 }
 
-# 应用配置（核心修改：添加check_download检查）
 apply_config() {
     info_log "安装oh-my-zsh框架..."
     su - $SUDO_USER -c "sh -c \"\$(wget -qO- https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\" --unattended"
@@ -52,7 +48,6 @@ apply_config() {
     success_log "终端美化完成！重启终端后按提示配置主题"
 }
 
-# 执行流程（无修改）
 get_lists
 select_color
 select_font
