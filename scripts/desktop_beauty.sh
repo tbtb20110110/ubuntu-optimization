@@ -1,0 +1,57 @@
+#!/bin/bash
+USER_HOME=$(eval echo ~$SUDO_USER)
+DESKTOP_ENV=$(echo "$XDG_CURRENT_DESKTOP" | tr '[:upper:]' '[:lower:]')
+source <(wget -qO- $REPO_URL/scripts/log_tool.sh)
+
+# 安装桌面美化依赖
+install_deps() {
+    info_log "检测桌面环境：$DESKTOP_ENV"
+    case $DESKTOP_ENV in
+        gnome|ubuntu:gnome)
+            apt install -y gnome-tweaks gnome-shell-extensions > /dev/null
+            ;;
+        kde|plasma)
+            apt install -y kde-config-gtk-style plasma-widgets-addons > /dev/null
+            ;;
+        *)
+            error_log "仅支持GNOME/KDE桌面环境，跳过桌面美化"
+            exit 1
+            ;;
+    esac
+}
+
+# 获取桌面主题列表
+get_theme_list() {
+    DESKTOP_THEMES=($(wget -qO- $REPO_URL/config/desktop_themes.list))
+}
+
+# 选择桌面主题
+select_theme() {
+    echo -e "${YELLOW}===== 桌面主题选择 =====${NC}"
+    for i in "${!DESKTOP_THEMES[@]}"; do
+        echo " [$((i+1))] ${DESKTOP_THEMES[$i]}"
+    done
+    read -p "  请选择主题 [1-${#DESKTOP_THEMES[@]}]: " theme_idx
+    SELECTED_THEME=${DESKTOP_THEMES[$((theme_idx-1))]}
+}
+
+# 应用桌面主题
+apply_theme() {
+    # 下载桌面配置文件
+    info_log "应用 ${SELECTED_THEME} 桌面配置..."
+    wget -q "$REPO_URL/config/desktop_tpl/${DESKTOP_ENV}_${SELECTED_THEME}.conf" -O $USER_HOME/.config/${DESKTOP_ENV}_theme.conf
+    chown -R $SUDO_USER:$SUDO_USER $USER_HOME/.themes $USER_HOME/.config
+
+    # 输出生效命令
+    success_log "桌面主题配置完成！重启桌面后生效"
+    case $DESKTOP_ENV in
+        gnome) echo -e "${BLUE}生效命令：gnome-tweaks -t $SELECTED_THEME${NC}" ;;
+        kde) echo -e "${BLUE}生效命令：plasma-apply-desktoptheme $SELECTED_THEME${NC}" ;;
+    esac
+}
+
+# 执行桌面美化流程
+install_deps
+get_theme_list
+select_theme
+apply_theme
