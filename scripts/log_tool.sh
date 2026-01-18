@@ -1,5 +1,5 @@
 #!/bin/bash
-# 补充颜色变量，解决子脚本调用时无颜色输出的问题
+# 补充颜色变量，解决子脚本调用无颜色问题
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -11,7 +11,7 @@ NC='\033[0m'
 LOG_FILE="logs/dualboot_$(date +%Y%m%d).log"
 mkdir -p logs
 
-# 核心修复：用%T替代%H:%M:%S，彻底规避参数拆分
+# 用%T替代%H:%M:%S，彻底解决参数拆分错误
 info_log() {
     echo -e "${BLUE}[*] $(date +%T) $1${NC}"
     echo "[$(date +'%Y-%m-%d %T')] [INFO] $1" >> $LOG_FILE
