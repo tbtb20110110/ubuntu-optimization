@@ -1,9 +1,8 @@
 #!/bin/bash
 set -e
 
-# ====================== 用户唯一需要修改的地方 ======================
-# 替换规则：https://raw.githubusercontent.com/你的GitHub用户名/ubuntu-optimization/main
-REPO_URL="https://raw.githubusercontent.com/你的用户名/ubuntu-optimization/main"
+# ============================================
+REPO_URL="https://raw.githubusercontent.com/tbtb20110110/ubuntu-optimization/main"
 # ==================================================================
 
 export REPO_URL
