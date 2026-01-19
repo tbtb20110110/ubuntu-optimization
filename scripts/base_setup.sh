@@ -5,45 +5,59 @@ source ./log_tool.sh
 
 USER_HOME=$(eval echo ~$SUDO_USER)
 
+# 核心修复：自动检测架构，arm64用ubuntu-ports源，amd64用普通源
 replace_sources() {
+    # 检测系统架构，aarch64对应arm64
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ]; then
+        PORT_FLAG="-ports"
+        echo -e "${YELLOW}检测到 arm64 架构，自动使用 ubuntu-ports 源${NC}"
+    else
+        PORT_FLAG=""
+    fi
+
     echo -e "${YELLOW}===== 国内源选择 =====${NC}"
     echo " [1] 阿里云源 [2] 清华大学源 [3] 中科大源 [4] 保留官方源"
     read -p "  请选择源 [1-4]: " src_idx
     case $src_idx in
         1)
             cat > /etc/apt/sources.list << EOF
-deb http://mirrors.aliyun.com/ubuntu/ noble main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ noble-updates main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ noble-backports main restricted universe multiverse
-deb http://mirrors.aliyun.com/ubuntu/ noble-security main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu${PORT_FLAG}/ noble main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu${PORT_FLAG}/ noble-updates main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu${PORT_FLAG}/ noble-backports main restricted universe multiverse
+deb http://mirrors.aliyun.com/ubuntu${PORT_FLAG}/ noble-security main restricted universe multiverse
 EOF
             ;;
         2)
             cat > /etc/apt/sources.list << EOF
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-updates main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-backports main restricted universe multiverse
-deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu/ noble-security main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu${PORT_FLAG}/ noble main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu${PORT_FLAG}/ noble-updates main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu${PORT_FLAG}/ noble-backports main restricted universe multiverse
+deb https://mirrors.tuna.tsinghua.edu.cn/ubuntu${PORT_FLAG}/ noble-security main restricted universe multiverse
 EOF
             ;;
         3)
             cat > /etc/apt/sources.list << EOF
-deb https://mirrors.ustc.edu.cn/ubuntu/ noble main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu/ noble-updates main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu/ noble-backports main restricted universe multiverse
-deb https://mirrors.ustc.edu.cn/ubuntu/ noble-security main restricted universe multiverse
+deb https://mirrors.ustc.edu.cn/ubuntu${PORT_FLAG}/ noble main restricted universe multiverse
+deb https://mirrors.ustc.edu.cn/ubuntu${PORT_FLAG}/ noble-updates main restricted universe multiverse
+deb https://mirrors.ustc.edu.cn/ubuntu${PORT_FLAG}/ noble-backports main restricted universe multiverse
+deb https://mirrors.ustc.edu.cn/ubuntu${PORT_FLAG}/ noble-security main restricted universe multiverse
 EOF
             ;;
         4) return ;;
         *) error_log "无效选择"; return ;;
     esac
-    apt update && apt upgrade -y > /dev/null
+    # 忽略索引下载失败，强制更新
+    apt update -o Acquire::Failed-Timeout=30 -y || true
+    apt upgrade -y > /dev/null
     success_log "国内源配置完成"
 }
 
+# 核心修复：替换缺失的字体包为 arm64 兼容版
 terminal_chinese() {
     info_log "配置终端全局中文..."
-    apt install -y language-pack-zh-hans fonts-wqy-microhei > /dev/null
+    # 用 fonts-wqy-microhei-lite 替代原包，兼容所有架构
+    apt install -y language-pack-zh-hans fonts-wqy-microhei-lite > /dev/null
     update-locale LANG=zh_CN.UTF-8 LC_ALL=zh_CN.UTF-8
     echo "export LANG=zh_CN.UTF-8" >> $USER_HOME/.bashrc
     success_log "终端中文配置完成，重启终端生效"
@@ -86,6 +100,7 @@ libs_complete() {
 
 huawei_specific() {
     info_log "华为 MateBook 15d 专属优化..."
+    # 避免重复写入 GRUB 参数
     if ! grep -q "acpi_backlight=vendor" /etc/default/grub; then
         sed -i '/GRUB_CMDLINE_LINUX_DEFAULT/s/"$/ acpi_backlight=vendor"/' /etc/default/grub
     fi
@@ -94,6 +109,7 @@ huawei_specific() {
     success_log "华为 MateBook 15d 专属优化完成"
 }
 
+# 执行所有配置
 replace_sources
 terminal_chinese
 fingerprint_setup
